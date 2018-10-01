@@ -1,6 +1,14 @@
 pragma solidity ^0.4.23;
 
-contract Marketplace {
+import "./libraries/TradingIntervalLib.sol";
+
+contract Marketplace{
+    using TradingIntervalLib for TradingIntervalLib.TradingIntervalStorage;
+    TradingIntervalLib.TradingIntervalStorage tradingInterval;
+
+    bool public dev;
+    uint private _currentTime;
+
     struct BidAsk { 
         address from;
         uint price;
@@ -13,20 +21,29 @@ contract Marketplace {
         uint price;
         uint amount;
     }
+
     mapping(uint => BidAsk[]) public bids;
     mapping(uint => BidAsk[]) public asks;
 
     mapping(uint => Trade[]) public trades;
 
-    constructor(uint startTime, uint intervalLength, uint cutoffLengthInIntervals) public {
-        
+    modifier inBiddingPeriod(uint tradingIntervalId) {
+        require(tradingInterval.getIntervalState(tradingIntervalId, currentTime()) == TradingIntervalLib.IntervalStates.BIDDING);
+        _;
     }
-    function submitBid(uint intervalId, uint amount, uint price) public{
+
+    //TODO fire trade event
+
+    constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev) public {
+        tradingInterval.init(startTime, tradingIntervalLength, clearingDuration, biddingDuration);
+        dev = _dev;
+    }
+    function submitBid(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public{
         // TODO: check for cutoff time
         
         bids[intervalId].push(BidAsk(msg.sender, price, amount));
     }
-    function submitAsk(uint intervalId, uint amount, uint price) public{
+    function submitAsk(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public{
         // TODO: check for cutoff time
         
         asks[intervalId].push(BidAsk(msg.sender, price, amount));
@@ -61,4 +78,15 @@ contract Marketplace {
     function settleTrade(intervalId , from, to) {
        // TODO: add later
     }*/
+
+    function setCurrentTime(uint timestamp) {
+        _currentTime = timestamp;
+    }
+    // Dev function for mocking time in tests 
+    function currentTime() public returns (uint){
+        if (dev) {
+            return _currentTime;
+        }
+        else now;
+    }
 }

@@ -2,8 +2,24 @@ var Marketplace = artifacts.require("./Marketplace.sol");
 const should = require('should');
 
 contract('Marketplace', function(accounts) {
+  it.only("should be possible to place bids and asks in the bidding period and only then", async function() {
+    const biddingDuration = 60
+    const clearingDuration = 60
+    const contract = await Marketplace.new(biddingDuration+clearingDuration, 360, clearingDuration, biddingDuration, true)
+    const bid = {
+        intervalId: 0,
+        sender: accounts[0],
+        amount: 5,
+        price: 100
+    }
+
+    await contract.setCurrentTime(1);
+    await contract.submitBid.sendTransaction(bid.intervalId, bid.amount, bid.price)
+    await contract.submitAsk.sendTransaction(bid.intervalId, bid.amount, bid.price)
+  })
+  
   it("Should be possible to place bids and asks", async function() {
-    const contract = await Marketplace.new()
+    const contract = await Marketplace.new(0, 360, 60, 60, true)
 
     const bid = {
         intervalId: 0,
@@ -27,7 +43,7 @@ contract('Marketplace', function(accounts) {
   });
 
   it("Should order bids/asks in the order they were added", async function() {
-    const contract = await Marketplace.new()
+    const contract = await Marketplace.new(0, 360, 60, 60, true)
 
     const bid1 = {
         intervalId: 0,
@@ -61,7 +77,7 @@ contract('Marketplace', function(accounts) {
   }
 
   it("should match bids and asks by time", async function() {
-    const contract = await Marketplace.new()
+    const contract = await Marketplace.new(0, 360, 60, 60, true)
     const bidsAsks = [
         { amount: 100, price: 100, sender: 1, isBid: true},
         { amount: 100, price: 80, sender: 2, isBid: true},
