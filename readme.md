@@ -20,5 +20,5 @@ All trading intervals have the same lengths and are assigned a consecutive ID. I
 ## Client API
 - **placeBid(tradingIntervalID, amount, price)**: Bids an amount of energy for a trading interval for a set price per unit. Only possible during bidding period of trading interval.
 - **placeAsk(tradingIntervalID, amount, price)**: Ask for an amount of energy for a trading interval for a set price per unit. Only possible during bidding period of trading interval.
-- **clearInterval(tradingIntervalID)**: Matches all bids and asks in the trading interval and forms trades out of them. A trade consists of a producer, a consumer, an amount and a price. only possible during clearing period of trading interval. **TODO: Incentivize users to call this**
+- **clearInterval(tradingIntervalID)**: Matches all bids and asks in the trading interval and forms trades out of them. A trade consists of a producer, a consumer, an amount and a price. Only possible during clearing period of trading interval. **TODO: Incentivize users to call this**
 - **settleTrade(tradingIntervalID, tradeID)**: **TODO: further specify**
