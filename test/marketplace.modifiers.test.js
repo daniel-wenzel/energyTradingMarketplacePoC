@@ -62,4 +62,24 @@ contract('Marketplace (modifiers)', function (accounts) {
         await contract.clearInterval.sendTransaction(intervalId).should.not.be.rejected()
         await contract.clearInterval.sendTransaction(intervalId).should.be.rejected()
     })
+
+    it.only("should refund gas when clearInterval is called at the wrong time", async function () {
+        const intervalId = 0
+        const period = "BIDDING"
+        const contract = await makeContractInPeriod(period, intervalId)
+        const priorBalance = web3.eth.getBalance(accounts[0])
+        const gasSent = 100000
+        const gasPrice = web3.toWei(100, 'shannon') // default gas price https://truffleframework.com/docs/truffle/reference/configuration
+        try {
+            await contract.clearInterval.sendTransaction(intervalId, {
+                gas: gasSent
+            })
+        }
+        catch (e) {
+            const postBalance = web3.eth.getBalance(accounts[0])
+            const gasUsed = +priorBalance.minus(postBalance).dividedBy(gasPrice)
+            gasUsed.should.be.lessThan(gasSent)
+        }
+
+    })
 })
