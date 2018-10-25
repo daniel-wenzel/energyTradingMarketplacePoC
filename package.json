@@ -1,0 +1,28 @@
+{
+  "name": "tradingPoC2",
+  "version": "1.0.0",
+  "description": "This Proof of Concept simulates on chain P2P energy trading. Prosumers can make bids and asks for energy in a specific target interval. Bids and Asks are matched into trades which the participants can then execute.",
+  "main": "truffle-config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "dependencies": {
+    "should": "^13.2.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daniel-wenzel/energyTradingMarketplacePoC.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daniel-wenzel/energyTradingMarketplacePoC/issues"
+  },
+  "homepage": "https://github.com/daniel-wenzel/energyTradingMarketplacePoC#readme"
+}
