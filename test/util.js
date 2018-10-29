@@ -1,5 +1,7 @@
 const Marketplace = artifacts.require("./Marketplace.sol");
 
+const clearingAlgorithms = ["NONE", "PRICE_TIME_BASED", "MENGELKAMP"]
+
 async function makeContractInPeriod(period, intervalId, opts) {
     period = period || "PRIOR_BIDDING"
     // all values in seconds
@@ -8,11 +10,13 @@ async function makeContractInPeriod(period, intervalId, opts) {
         tradingIntervalLength: 120,
         biddingDuration: 90,
         clearingDuration: 30,
-        dev: true
+        dev: true,
+        clearingAlgorithm: "NONE"
     }
 
     const o = Object.assign(defaultOptions, opts)
-    const contract = await Marketplace.new(o.startTime, o.tradingIntervalLength, o.clearingDuration, o.biddingDuration, o.dev)
+    const clearingAlgorithmId = clearingAlgorithms.findIndex(a => a == o.clearingAlgorithm)
+    const contract = await Marketplace.new(o.startTime, o.tradingIntervalLength, o.clearingDuration, o.biddingDuration, o.dev, clearingAlgorithmId)
 
     switch (period) {
         case "PRIOR_BIDDING":
@@ -52,17 +56,35 @@ async function makeDefaultContract(opts) {
         tradingIntervalLength: 120,
         biddingDuration: 90,
         clearingDuration: 30,
-        dev: true
+        dev: true,
+        clearingAlgorithm: "NONE"
     }
     const o = Object.assign(defaultOptions, opts)
-    const contract = await Marketplace.new(o.startTime, o.tradingIntervalLength, o.clearingDuration, o.biddingDuration, o.dev)
+    const clearingAlgorithmId = clearingAlgorithms.findIndex(a => a == o.clearingAlgorithm)
+    const contract = await Marketplace.new(o.startTime, o.tradingIntervalLength, o.clearingDuration, o.biddingDuration, o.dev, clearingAlgorithmId)
 
     return contract
+}
+
+function shouldHaveEmittedTradesFactory(assert) {
+    return (receipt, trades) => {
+        if (trades.length === undefined) {
+            trades = [trades]
+        }
+        const formatedTrades = trades.map(trade => {
+            return {
+                event: 'TradeEvent',
+                args: trade
+            }
+        })
+        assert.web3AllEvents(receipt, formatedTrades);
+    }
 }
 
 module.exports = {
     makeDefaultContract,
     makeContractInPeriod,
     placeBidAsk,
+    shouldHaveEmittedTradesFactory,
     periods: ["PRIOR_BIDDING", "BIDDING", "CLEARING", "TRADING", "POST_TRADING"]
 }

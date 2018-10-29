@@ -1,5 +1,7 @@
 pragma solidity ^0.4.23;
 
+
+
 library TradingIntervalLib {
 
     enum IntervalStates { PRIOR_BIDDING, BIDDING, CLEARING, TRADING, POST_TRADING }

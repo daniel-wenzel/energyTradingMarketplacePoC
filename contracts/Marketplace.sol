@@ -2,25 +2,27 @@ pragma solidity ^0.4.23;
 
 import "./libraries/TradingIntervalLib.sol";
 import "./libraries/ClearingLib.sol";
+import "./libraries/SortedBidAskListLib.sol";
 
 contract Marketplace{
     using TradingIntervalLib for TradingIntervalLib.TradingIntervalStorage;
     using ClearingLib for ClearingLib.TradingIntervalState;
 
-
-    TradingIntervalLib.TradingIntervalStorage tradingInterval;
-
-    bool public dev;
-    uint private _currentTime;
-
-    // this is potentially very ineffficient because we also store all trades on chain
     event TradeEvent(
         uint intervalId,
         address from,
         address to,
         uint amount,
         uint price
-    );    
+    );
+    TradingIntervalLib.TradingIntervalStorage tradingInterval;
+    ClearingLib.ClearingAlgorithm algorithm;
+
+    bool public dev;
+    uint private _currentTime;
+
+    // this is potentially very ineffficient because we also store all trades on chain
+     
     mapping(uint => ClearingLib.TradingIntervalState) public intervalState;
 
    /* mapping(uint => ClearingLib.BidAsk[]) public bids;
@@ -43,21 +45,29 @@ contract Marketplace{
 
     //TODO fire trade event
 
-    constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev) public {
+    constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev, ClearingLib.ClearingAlgorithm _clearingAlgorithm) public {
         tradingInterval.init(startTime, tradingIntervalLength, clearingDuration, biddingDuration);
         dev = _dev;
+        algorithm = _clearingAlgorithm;
     }
     function submitBid(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public {
+        if (!intervalState[intervalId].initialized) {
+            intervalState[intervalId].init(algorithm, intervalId);
+        }
         //bids[intervalId].push(ClearingLib.BidAsk(msg.sender, price, amount));
         intervalState[intervalId].addBid(msg.sender, price, amount);
     }
-    function submitAsk(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public {         
+    function submitAsk(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public {
+        if (!intervalState[intervalId].initialized) {
+            intervalState[intervalId].init(algorithm, intervalId);
+        }
+
         intervalState[intervalId].addAsk(msg.sender, price, amount);
     }
 
     // Solidity does not allow returning structs, therefore we return the individual items
     function debugGetBidAsk(uint intervalId, uint id, bool bids) public constant returns (address, uint, uint, int) {
-        ClearingLib.SortedBidAskList memory list;
+        SortedBidAskListLib.SortedBidAskList memory list;
         if (bids) {
             list = intervalState[intervalId].openBids;
         }
@@ -70,7 +80,7 @@ contract Marketplace{
             id --;
         }
 
-        ClearingLib.BidAsk memory item = list.items[uint(sortedId)];
+        SortedBidAskListLib.BidAsk memory item = list.items[uint(sortedId)];
         return (item.from, item.price, item.amount, item.nextId);
     }
     function clearInterval(uint intervalId) inClearingPeriod(intervalId) public {

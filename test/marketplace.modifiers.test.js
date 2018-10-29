@@ -63,7 +63,7 @@ contract('Marketplace (modifiers)', function (accounts) {
         await contract.clearInterval.sendTransaction(intervalId).should.be.rejected()
     })
 
-    it.only("should refund gas when clearInterval is called at the wrong time", async function () {
+    it("should refund gas when clearInterval is called at the wrong time", async function () {
         const intervalId = 0
         const period = "BIDDING"
         const contract = await makeContractInPeriod(period, intervalId)

@@ -4,7 +4,7 @@ const should = require('should');
 const {makeContractInPeriod, placeBidAsk} = require("./util")
 
 
-contract('Marketplace', function (accounts) {
+contract('Marketplace (placing Bids and Asks)', function (accounts) {
 
     it("Should be possible to place bids and asks", async function () {
         const intervalId = 0

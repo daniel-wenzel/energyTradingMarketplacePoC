@@ -1,13 +1,18 @@
 pragma solidity ^0.4.23;
 
+import "./SortedBidAskListLib.sol";
 library ClearingLib {
+    using SortedBidAskListLib for SortedBidAskListLib.SortedBidAskList;
 
-    struct BidAsk { 
-        address from;
-        uint price;
-        uint amount;   
-        int nextId;     
-    }
+    enum ClearingAlgorithm { NONE, PRICE_TIME_BASED, MENGELKAMP }
+
+    event TradeEvent(
+        uint intervalId,
+        address from,
+        address to,
+        uint amount,
+        uint price
+    );
 
     struct Trade {
         address producer;
@@ -16,77 +21,86 @@ library ClearingLib {
         uint amount;
     }
 
-    struct SortedBidAskList {
-        BidAsk[] items;
-        uint firstItemId;
-        int8 sortDir;
-    }
-
     struct TradingIntervalState {
-        SortedBidAskList openBids;
-        SortedBidAskList openAsks;
+        SortedBidAskListLib.SortedBidAskList openBids;
+        SortedBidAskListLib.SortedBidAskList openAsks;
         Trade[] matchedTrades;
 
         bool initialized;
         bool isCleared;
+        uint intervalId;
+
+        ClearingAlgorithm clearingAlgorithm;
     }
 
-    function init(TradingIntervalState storage self) public{
+    function init(TradingIntervalState storage self, ClearingAlgorithm algorithm, uint intervalId) public{
         self.openBids.sortDir = 1;
         self.openAsks.sortDir = -1;
+        self.openBids.firstItemId = -1;
+        self.openAsks.firstItemId = -1;
+
         self.initialized = true;
+
+        self.clearingAlgorithm = algorithm;
+        self.intervalId = intervalId;
     }
 
     function addBid(TradingIntervalState storage self, address from, uint price, uint amount) public {
-        if (self.initialized == false) init(self);
 
-        addToList(self.openBids, BidAsk(from, price, amount, -1));
+        self.openBids.add(from, price, amount);
+
+        onBidAsk(self);
     }
 
     function addAsk(TradingIntervalState storage self, address from, uint price, uint amount) public {
-        if (self.initialized == false) init(self);
 
-        addToList(self.openAsks, BidAsk(from, price, amount, -1));
+        self.openAsks.add(from, price, amount);
+        
+        onBidAsk(self);
     }
 
-    function addToList(SortedBidAskList storage list, BidAsk _itemToAdd) private {
-        uint newItemId = list.items.length;
-        list.items.push(_itemToAdd);
-        // if we work on the passed memory object we can not edit it
-        BidAsk storage itemToAdd = list.items[newItemId];
-
-        // check if list is empty
-        if (newItemId == 0) {
-            list.firstItemId = newItemId;
-            return;
-        }
-
-        uint currentId = list.firstItemId;
-        BidAsk storage currentItem = list.items[currentId];
-
-        // check if the new item should be the new first item
-        if (int(currentItem.price) * list.sortDir > int(itemToAdd.price) * list.sortDir ) {
-            list.firstItemId = newItemId;
-            itemToAdd.nextId = int(currentId);
-            return;
-        }
-
-        // find the bid which should be in front of the new bid
-        while (currentItem.nextId >= 0 && int(list.items[uint(currentItem.nextId)].price) * list.sortDir < int(itemToAdd.price) * list.sortDir) {
-            currentId = uint(currentItem.nextId);
-            currentItem = list.items[currentId];
-        }
-
-        // insert new item
-        itemToAdd.nextId = currentItem.nextId;
-        currentItem.nextId = int(newItemId);
-    }
     function clear(TradingIntervalState storage self) internal {
         require(!self.isCleared);
-        self.isCleared = true;
+        self.isCleared = true; 
 
-        // TODO implement clearing logic
+       
+        if (self.clearingAlgorithm == ClearingAlgorithm.MENGELKAMP) {
+            // TODO implement clearing logic
+        }
     }
+
+    function priceTimeBasedClearing(TradingIntervalState storage self) internal{
+            // if we have no more asks / bids to match stop
+        while (self.openBids.firstItemId != -1 && self.openAsks.firstItemId != -1) {
+            SortedBidAskListLib.BidAsk storage bid = self.openBids.items[uint(self.openBids.firstItemId)];
+            SortedBidAskListLib.BidAsk storage ask = self.openAsks.items[uint(self.openAsks.firstItemId)];
+            // if the price of the bid is higher than the price of the ask, stop
+            if (bid.price > ask.price) {
+                break;
+            }
+
+            uint tradedAmount = bid.amount > ask.amount? ask.amount : bid.amount;
+            ask.amount -= tradedAmount;
+            bid.amount -= tradedAmount;
+
+            self.matchedTrades.push(Trade(bid.from, ask.from, bid.price, tradedAmount));
+            emit TradeEvent(self.intervalId, bid.from, ask.from, tradedAmount, bid.price);
+
+            if (bid.amount == 0) {
+                self.openBids.removeFirstItem();
+            }
+            if (ask.amount == 0) {
+                self.openAsks.removeFirstItem();
+            }
+        }
+    }
+
+    function onBidAsk(TradingIntervalState storage self) internal {
+        if (self.clearingAlgorithm == ClearingAlgorithm.PRICE_TIME_BASED) {
+            priceTimeBasedClearing(self);
+        }
+    } 
+
 /*
     function compute(Trade[] storage trades, BidAsk[] storage bids, BidAsk[] storage asks) public {
         // price time matching

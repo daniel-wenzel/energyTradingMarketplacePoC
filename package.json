@@ -10,7 +10,9 @@
   "dependencies": {
     "should": "^13.2.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "truffle-test-utils": "^0.1.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
