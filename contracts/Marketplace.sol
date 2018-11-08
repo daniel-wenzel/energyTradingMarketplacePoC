@@ -40,9 +40,6 @@ contract Marketplace{
         _;
     }
 
-
-    //TODO fire trade event
-
     constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev, TradingIntervalStateObjectLib.ClearingAlgorithm _clearingAlgorithm) public {
         tradingIntervalTimeMapping.init(startTime, tradingIntervalLength, clearingDuration, biddingDuration);
         dev = _dev;
@@ -52,7 +49,6 @@ contract Marketplace{
         if (!intervalState[intervalId].initialized) {
             intervalState[intervalId].init(algorithm, intervalId);
         }
-        //bids[intervalId].push(ClearingLib.BidAsk(msg.sender, price, amount));
         intervalState[intervalId].addBid(msg.sender, price, amount);
     }
     function submitAsk(uint intervalId, uint amount, uint price) inBiddingPeriod(intervalId) public {
@@ -65,6 +61,7 @@ contract Marketplace{
 
     // Solidity does not allow returning structs, therefore we return the individual items
     function debugGetBidAsk(uint intervalId, uint id, bool bids) public constant returns (address, uint, uint, int) {
+        require(dev);
         SortedBidAskListLib.BidAsk[] memory list;
         if (bids) {
             list = intervalState[intervalId].openBids.getAsArray();
@@ -99,6 +96,7 @@ contract Marketplace{
     }*/
 
     function setCurrentTime(uint timestamp) public {
+        require(dev);
         _currentTime = timestamp;
     }
     // Dev function for mocking time in tests 
