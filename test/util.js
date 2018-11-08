@@ -18,26 +18,27 @@ async function makeContractInPeriod(period, intervalId, opts) {
     const clearingAlgorithmId = clearingAlgorithms.findIndex(a => a == o.clearingAlgorithm)
     const contract = await Marketplace.new(o.startTime, o.tradingIntervalLength, o.clearingDuration, o.biddingDuration, o.dev, clearingAlgorithmId)
 
+    await contract.setCurrentTime.sendTransaction(getTimeInPeriod(period, o, intervalId))
+    contract.setPeriod = (_period, _intervalId) => {
+        return contract.setCurrentTime.sendTransaction(getTimeInPeriod(_period, o, _intervalId))
+    }
+    return contract
+}
+function getTimeInPeriod(period, o, intervalId) {
     switch (period) {
         case "PRIOR_BIDDING":
-            await contract.setCurrentTime.sendTransaction(o.startTime + o.tradingIntervalLength * intervalId - o.clearingDuration - o.biddingDuration - 1)
-            break;
+            return o.startTime + o.tradingIntervalLength * intervalId - o.clearingDuration - o.biddingDuration - 1
         case "BIDDING":
-            await contract.setCurrentTime.sendTransaction(o.startTime + o.tradingIntervalLength * intervalId - o.clearingDuration - 1)
-            break;
+            return o.startTime + o.tradingIntervalLength * intervalId - o.clearingDuration - 1
         case "CLEARING":
-            await contract.setCurrentTime.sendTransaction(o.startTime + o.tradingIntervalLength * intervalId - 1)
-            break;
+            return o.startTime + o.tradingIntervalLength * intervalId - 1
         case "TRADING":
-            await contract.setCurrentTime.sendTransaction(o.startTime + o.tradingIntervalLength * intervalId)
-            break;
+            return o.startTime + o.tradingIntervalLength * intervalId
         case "POST_TRADING":
-            await contract.setCurrentTime.sendTransaction(o.startTime + o.tradingIntervalLength * (intervalId + 1))
-            break;
+            return o.startTime + o.tradingIntervalLength * (intervalId + 1)
         default:
             throw new Error("unrecognized period: " + period)
     }
-    return contract
 }
 
 

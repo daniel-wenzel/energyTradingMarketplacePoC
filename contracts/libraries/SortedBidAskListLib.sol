@@ -1,4 +1,5 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 library SortedBidAskListLib {
 
@@ -13,10 +14,12 @@ library SortedBidAskListLib {
         BidAsk[] items;
         int firstItemId;
         int8 sortDir;
+        uint numEntries;
     }
 
     function add(SortedBidAskList storage list, address from, uint price, uint amount) public {
         uint newItemId = list.items.length;
+        list.numEntries += 1;
         list.items.push(BidAsk(from, price, amount, -1));
         // if we work on the passed memory object we can not edit it
         BidAsk storage itemToAdd = list.items[newItemId];
@@ -54,5 +57,18 @@ library SortedBidAskListLib {
         int newFirstItemId = list.items[uint(list.firstItemId)].nextId;
         delete list.items[uint(list.firstItemId)];
         list.firstItemId = newFirstItemId;
+        list.numEntries -= 1;
+    }
+
+    function getAsArray(SortedBidAskList storage list) public constant returns (BidAsk[]) {
+        BidAsk[] memory result = new BidAsk[](list.numEntries);
+        int nextId = list.firstItemId;
+        uint i = 0;
+        while (nextId >= 0) {
+            result[i] = list.items[uint(nextId)];
+            nextId = result[i].nextId;
+            i++;
+        }
+        return result;
     }
 } 

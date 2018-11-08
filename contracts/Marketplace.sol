@@ -1,12 +1,15 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
-import "./libraries/TradingIntervalLib.sol";
-import "./libraries/ClearingLib.sol";
+import "./libraries/TradingIntervalTimeMappingLib.sol";
+import "./libraries/TradingIntervalStateObjectLib.sol";
+import "./libraries/TradingIntervalStateFunctionsLib.sol";
 import "./libraries/SortedBidAskListLib.sol";
 
 contract Marketplace{
-    using TradingIntervalLib for TradingIntervalLib.TradingIntervalStorage;
-    using ClearingLib for ClearingLib.TradingIntervalState;
+    using TradingIntervalTimeMappingLib for TradingIntervalTimeMappingLib.TradingIntervalTimeMappingStorage;
+    using TradingIntervalStateFunctionsLib for TradingIntervalStateObjectLib.TradingIntervalState;
+    using SortedBidAskListLib for SortedBidAskListLib.SortedBidAskList;
 
     event TradeEvent(
         uint intervalId,
@@ -15,38 +18,33 @@ contract Marketplace{
         uint amount,
         uint price
     );
-    TradingIntervalLib.TradingIntervalStorage tradingInterval;
-    ClearingLib.ClearingAlgorithm algorithm;
+    event DEBUG(
+        string message,
+        uint val
+    );
+
+    TradingIntervalTimeMappingLib.TradingIntervalTimeMappingStorage tradingIntervalTimeMapping;
+    TradingIntervalStateObjectLib.ClearingAlgorithm algorithm;
 
     bool public dev;
     uint private _currentTime;
-
-    // this is potentially very ineffficient because we also store all trades on chain
-     
-    mapping(uint => ClearingLib.TradingIntervalState) public intervalState;
-
-   /* mapping(uint => ClearingLib.BidAsk[]) public bids;
-    mapping(uint => ClearingLib.BidAsk[]) public asks;
-
-    // makes sure each interval can only be cleared once
-    mapping(uint => bool) public isIntervalCleared;
-
-    mapping(uint => ClearingLib.Trade[]) public trades;*/
+    
+    mapping(uint => TradingIntervalStateObjectLib.TradingIntervalState) public intervalState;
 
     modifier inBiddingPeriod(uint tradingIntervalId) {
-        require(tradingInterval.getIntervalState(tradingIntervalId, currentTime()) == TradingIntervalLib.IntervalStates.BIDDING);
+        require(tradingIntervalTimeMapping.getIntervalState(tradingIntervalId, currentTime()) == TradingIntervalTimeMappingLib.IntervalStates.BIDDING);
         _;
     }
     modifier inClearingPeriod(uint tradingIntervalId) {
-        require(tradingInterval.getIntervalState(tradingIntervalId, currentTime()) == TradingIntervalLib.IntervalStates.CLEARING);
+        require(tradingIntervalTimeMapping.getIntervalState(tradingIntervalId, currentTime()) == TradingIntervalTimeMappingLib.IntervalStates.CLEARING);
         _;
     }
 
 
     //TODO fire trade event
 
-    constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev, ClearingLib.ClearingAlgorithm _clearingAlgorithm) public {
-        tradingInterval.init(startTime, tradingIntervalLength, clearingDuration, biddingDuration);
+    constructor(uint startTime, uint tradingIntervalLength, uint clearingDuration, uint biddingDuration, bool _dev, TradingIntervalStateObjectLib.ClearingAlgorithm _clearingAlgorithm) public {
+        tradingIntervalTimeMapping.init(startTime, tradingIntervalLength, clearingDuration, biddingDuration);
         dev = _dev;
         algorithm = _clearingAlgorithm;
     }
@@ -67,40 +65,33 @@ contract Marketplace{
 
     // Solidity does not allow returning structs, therefore we return the individual items
     function debugGetBidAsk(uint intervalId, uint id, bool bids) public constant returns (address, uint, uint, int) {
-        SortedBidAskListLib.SortedBidAskList memory list;
+        SortedBidAskListLib.BidAsk[] memory list;
         if (bids) {
-            list = intervalState[intervalId].openBids;
+            list = intervalState[intervalId].openBids.getAsArray();
         }
         else {
-            list = intervalState[intervalId].openAsks;
+            list = intervalState[intervalId].openAsks.getAsArray();
         }
-        int sortedId = int(list.firstItemId);
-        while (id > 0) {
-            sortedId = list.items[uint(sortedId)].nextId;
-            id --;
-        }
-
-        SortedBidAskListLib.BidAsk memory item = list.items[uint(sortedId)];
+        SortedBidAskListLib.BidAsk memory item = list[id];
         return (item.from, item.price, item.amount, item.nextId);
     }
     function clearInterval(uint intervalId) inClearingPeriod(intervalId) public {
         intervalState[intervalId].clear();
-        //trades[intervalId].compute(bids[intervalId], asks[intervalId]);
     }
-    function getIntervalState(uint tradingIntervalId) public constant returns (TradingIntervalLib.IntervalStates interval) {
-        return tradingInterval.getIntervalState(tradingIntervalId, currentTime());
+    function getIntervalState(uint tradingIntervalId) public constant returns (TradingIntervalTimeMappingLib.IntervalStates interval) {
+        return tradingIntervalTimeMapping.getIntervalState(tradingIntervalId, currentTime());
     }
 
     function getStartOfInterval(uint intervalId) public constant returns (uint startTime) {
-        return tradingInterval.getStartOfInterval(intervalId);
+        return tradingIntervalTimeMapping.getStartOfInterval(intervalId);
     }
 
     function getEndOfInterval(uint intervalId) public constant returns (uint endTime) {
-        return tradingInterval.getEndOfInterval(intervalId);
+        return tradingIntervalTimeMapping.getEndOfInterval(intervalId);
     }
 
     function getIntervalId(uint timestamp) public constant returns (uint intervalId) {
-        return tradingInterval.getIntervalId(timestamp);
+        return tradingIntervalTimeMapping.getIntervalId(timestamp);
     }
 /*
     function settleTrade(intervalId , from, to) {

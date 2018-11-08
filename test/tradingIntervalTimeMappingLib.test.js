@@ -5,14 +5,13 @@ const {makeDefaultContract} = require("./util")
 
 
 
-contract('TradingIntervalLib', function (accounts) {
+contract('TradingIntervalTimeMappingLib', function (accounts) {
 
     it("should correctly initialized the trading intervals", async function () {
         const opts = {
             startTime: 400
         }
         const contract = await makeDefaultContract(opts)
-
         const startTimeOfFirstInterval = +await contract.getStartOfInterval(0)
 
         startTimeOfFirstInterval.should.equal(opts.startTime)
