@@ -1,0 +1,105 @@
+- name: 10_actions_20_percent_bids
+  numMarketActions: 10
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 50_actions_20_percent_bids
+  numMarketActions: 50
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 100_actions_20_percent_bids
+  numMarketActions: 100
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 250_actions_20_percent_bids
+  numMarketActions: 250
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 500_actions_20_percent_bids
+  numMarketActions: 500
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 750_actions_20_percent_bids
+  numMarketActions: 750
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
+- name: 1000_actions_20_percent_bids
+  numMarketActions: 1000
+  bidShare: 0.2
+  bidAmounts:
+    min: 200
+    max: 1000
+  askAmounts:
+    min: 5
+    max: 200
+  askPrices: 
+    min: 10
+    max: 100
+  bidPrices:
+    min: 10
+    max: 100
