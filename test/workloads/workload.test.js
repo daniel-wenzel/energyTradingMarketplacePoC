@@ -6,13 +6,13 @@ const fs = require("fs")
 const {makeContractInPeriod, periods} = require("../util")
 
 const workloads = [
-    //"10_actions_20_percent_bids",
+    "10_actions_20_percent_bids",
     //"50_actions_20_percent_bids",
     //"100_actions_20_percent_bids",
     //"250_actions_20_percent_bids",
-    "500_actions_20_percent_bids",
-    "750_actions_20_percent_bids",
-    "1000_actions_20_percent_bids",
+    //"500_actions_20_percent_bids",
+    //"750_actions_20_percent_bids",
+    //"1000_actions_20_percent_bids",
 ]
 
 contract('Gas Consumption', function (accounts) {
@@ -43,14 +43,16 @@ contract('Gas Consumption', function (accounts) {
 
             output.end()
     }
-    it.only(" mengelkamp", async function () {
+    //it.only(" mengelkamp", async function () {
+    //    for (workload of workloads) {
+    //        await executeWorkload(workload, "MENGELKAMP")
+    //    }
+    //}).timeout(1000*60*60)
+    it(" mengelkamp", async function () {
+    //it(" price time based", async function () {
         for (workload of workloads) {
             await executeWorkload(workload, "MENGELKAMP")
-        }
-    }).timeout(1000*60*60)
-    it(" price time based", async function () {
-        for (workload of workloads) {
-            await executeWorkload(workload, "PRICE_TIME_BASED")
+            //await executeWorkload(workload, "PRICE_TIME_BASED")
         }
     }).timeout(1000*60*60)
 })

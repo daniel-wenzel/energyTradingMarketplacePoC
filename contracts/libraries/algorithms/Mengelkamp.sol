@@ -44,7 +44,7 @@ library Mengelkamp {
             cumBidAmount += bids[cheapestBidWithHigherPriceId].amount;
             cheapestBidWithHigherPriceId++;
         }
-        
+
         // contains all asks price-wise descending
         // during interation this list will shrink
         SortedBidAskListLib.BidAsk[] memory asks = self.openAsks.getAsArray();
@@ -55,50 +55,50 @@ library Mengelkamp {
         uint cumAskAmount = 0;
         // init highestAskWithLowerPriceId and cumAskAmount
         while (uint(highestAskWithLowerPriceId) < asks.length && asks[uint(highestAskWithLowerPriceId)].price >= matchingPrice) {
-            //emit DEBUG("Willing to buy for initial price:", uint(highestAskWithLowerPriceId));
+            emit DEBUG("Willing to buy for initial price:", uint(highestAskWithLowerPriceId));
             cumAskAmount += asks[uint(highestAskWithLowerPriceId)].amount;
             highestAskWithLowerPriceId ++;
         }
         highestAskWithLowerPriceId--;
 
         while (cumAskAmount > cumBidAmount && highestAskWithLowerPriceId >= 0 && cheapestBidWithHigherPriceId < bids.length) {
-            
+
             matchingPrice = bids[cheapestBidWithHigherPriceId].price;
 
-            //emit DEBUG("New Matching Price:", matchingPrice);
+            emit DEBUG("New Matching Price:", matchingPrice);
             // increase matchedBidWithHighestPriceId until price is bigger than matchingPrice
-            while (cheapestBidWithHigherPriceId < bids.length && bids[cheapestBidWithHigherPriceId].price <= matchingPrice ) 
+            while (cheapestBidWithHigherPriceId < bids.length && bids[cheapestBidWithHigherPriceId].price <= matchingPrice )
             {
-                //emit DEBUG("Willing to sell now:", cheapestBidWithHigherPriceId);
+                emit DEBUG("Willing to sell now:", cheapestBidWithHigherPriceId);
                 cumBidAmount += bids[cheapestBidWithHigherPriceId].amount;
                 cheapestBidWithHigherPriceId++;
             }
 
             // decrease matchedAskWithLowestPriceId until price is smaller than matchingPrice
-            while (highestAskWithLowerPriceId > -1 && asks[uint(highestAskWithLowerPriceId)].price < matchingPrice) 
+            while (highestAskWithLowerPriceId > -1 && asks[uint(highestAskWithLowerPriceId)].price < matchingPrice)
             {
-                //emit DEBUG("Not willing to buy anymore:", uint(highestAskWithLowerPriceId));
+                emit DEBUG("Not willing to buy anymore:", uint(highestAskWithLowerPriceId));
                 cumAskAmount -= asks[uint(highestAskWithLowerPriceId)].amount;
                 if (highestAskWithLowerPriceId == 0) {
-                    //emit DEBUG("No one is willing to buy anymore", 0);
+                    emit DEBUG("No one is willing to buy anymore", 0);
                 }
                 highestAskWithLowerPriceId--;
             }
-            //emit DEBUG("----------", 0);
+            emit DEBUG("----------", 0);
         }
 
         // actually match orders at the matching price
         uint iBid = 0;
         uint iAsk = 0;
         while (highestAskWithLowerPriceId > -1 && iBid < cheapestBidWithHigherPriceId && iBid < bids.length && iAsk <= uint(highestAskWithLowerPriceId) && iAsk < asks.length) {
-            
+
             uint amount = bids[iBid].amount > asks[iAsk].amount? asks[iAsk].amount: bids[iBid].amount;
-            /*emit DEBUG("Matching Bid", iBid);
+            emit DEBUG("Matching Bid", iBid);
             emit DEBUG("Matching Ask", iAsk);
             emit DEBUG("Matchable Bid Amount", bids[iBid].amount);
             emit DEBUG("Matchable Ask Amount", asks[iAsk].amount);
             emit DEBUG("Matched Amount", amount);
-            emit DEBUG("---------",0);*/
+            emit DEBUG("---------",0);
             bids[iBid].amount -= amount;
             asks[iAsk].amount -= amount;
 
@@ -113,4 +113,4 @@ library Mengelkamp {
             }
         }
     }
-} 
+}
